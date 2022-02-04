@@ -1,0 +1,10 @@
+namespace: ${namespace}
+cfngin_bucket: ${cfngin_bucket}
+
+tags:
+  repository: '${repository}'
+
+stacks:
+  first-bucket:
+    stack_name: first-bucket
+    template_path: templates/bucket.yml

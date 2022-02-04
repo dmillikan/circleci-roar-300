@@ -1,0 +1,19 @@
+{
+  "name": "serverless-http-api-dynamodb",
+  "version": "1.0.0",
+  "description": "Serverless CRUD service exposing a REST HTTP interface",
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12 <13"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^10.2.4",
+    "serverless": "^2.72.2",
+    "serverless-webpack": "^5.6.1",
+    "webpack": "^5.68.0"
+  },
+  "dependencies": {
+    "uuid": "^8.3.2"
+  }
+}

@@ -1,0 +1,266 @@
+version: 2.1
+
+orbs:
+  aws-cli: circleci/aws-cli@2.0.6
+
+executors:
+  default:
+    docker:
+      - image: cimg/python:3.8.9-node
+        environment:
+          PIPENV_VENV_IN_PROJECT: true
+    shell: /bin/bash -eol pipefail
+
+commands:
+  change-node-version:
+    parameters:
+      version:
+        type: string
+    steps:
+      - run:
+          name: Install NVM
+          command: |
+            wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+      - run:
+          name: Verify NVM Install
+          command: |
+            command -v nvm
+      - run:
+          name: Install Node << parameters.version >>
+          command: |
+            nvm install << parameters.version >>
+            nvm use << parameters.version >>
+            nvm alias default node
+            echo "nvm use node" >> ~/.profile
+
+  setup-yarn-cache:
+    steps:
+      - restore_cache:
+          name: Restoring Yarn Package Cache
+          key: &yarncache yarn-packages-v1-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn install --frozen-lockfile --cache-folder ~/.cache/yarn
+      - save_cache:
+          name: Caching Yarn Packages
+          key: *yarncache
+          paths:
+            - ~/.cache/yarn
+            - node_modules
+
+  setup-pip-cache:
+    steps:
+      - restore_cache:
+          name: Restoring pip cache
+          key: &pipcachekey pipcache-v1-pyv3-8-9-{{ checksum "Pipfile.lock" }}
+      - run:
+          command: |
+            pip install pipenv
+            pipenv sync
+      - save_cache:
+          key: *pipcachekey
+          paths:
+            - ".venv"
+
+  make-bucket:
+    parameters:
+      bucket-name:
+        type: string
+    steps:
+      - run:
+          name: Make Bucket << parameters.bucket-name >>
+          command: |
+            if [ $(aws s3 ls | grep "<< parameters.bucket-name >>" | wc -l) -eq 0 ]
+            then
+                aws s3 mb "s3://<< parameters.bucket-name >>"
+                if [ $? -eq 0 ]
+                then
+                    echo "Deployment Bucket Created Successfully"
+                else
+                    echo "Deployment Bucket Exists in Other AWS Account"
+                    exit 1
+                fi
+            else
+              echo "Deployment Bucket Already Exists in AWS Account"
+            fi
+
+  runway-deploy:
+    parameters:
+      environment:
+        type: string
+    steps:
+      - run:
+          name: Deploy << parameters.environment >>
+          environment:
+            DEPLOY_ENVIRONMENT: << parameters.environment >>
+          command: pipenv run runway deploy
+
+  runway-plan:
+    parameters:
+      environment:
+        type: string
+    steps:
+      - run:
+          name: Deploy << parameters.environment >>
+          environment:
+            DEPLOY_ENVIRONMENT: << parameters.environment >>
+          command: pipenv run runway plan
+
+  serverless-deploy:
+    parameters:
+      environment:
+        type: string
+      serverless-directory:
+        type: string
+    steps:
+      - run:
+          name: Serverless Deploy << parameters.environment >>
+          environment:
+            DEPLOY_ENVIRONMENT: << parameters.environment >>
+          command: yarn run sls deploy --stage $DEPLOY_ENVIRONMENT
+
+  serverless-package:
+    parameters:
+      environment:
+        type: string
+      serverless-directory:
+        type: string
+    steps:
+      - run:
+          name: Serverless Deploy << parameters.environment >>
+          environment:
+            DEPLOY_ENVIRONMENT: << parameters.environment >>
+          command: yarn run sls package --stage $DEPLOY_ENVIRONMENT
+
+  custom-checkout:
+    parameters:
+      merge:
+        type: boolean
+        default: false
+    steps:
+      - checkout
+      - when:
+          condition: 
+            and: 
+              - << parameters.merge >>
+              - $CIRCLE_PULL_REQUEST
+          steps:
+            - run:
+                name: Merge Pull Request
+                command: chmod +x .circleci/git-pr-merge.sh && .circleci/git-pr-merge.sh
+
+jobs:
+  main:
+    executor: default
+    resource_class: small
+    parameters:
+      environment:
+        type: string
+      merge:
+        type: boolean
+        default: false
+    steps:
+      - custom-checkout:
+          merge: << parameters.merge >>
+      - aws-cli/install
+      - make-bucket:
+          bucket-name: $DEPLOYMENT_BUCKET
+      - setup-pip-cache
+      - run:
+          name: Check version
+          command: pipenv run runway --version
+      - change-node-version:
+          version: "12"
+      - setup-yarn-cache
+      - run:
+          name: Check version
+          command: yarn run sls --version
+      - runway-deploy:
+          environment: << parameters.environment >>
+      - serverless-deploy:
+          serverless-directory: todos
+          environment: << parameters.environment >>
+  validate:
+    executor: default
+    resource_class: small
+    parameters:
+      environment:
+        type: string
+      merge:
+        type: boolean
+        default: false
+    steps:
+      - custom-checkout:
+          merge: << parameters.merge >>
+      - aws-cli/install
+      - run:
+          name: Validate << parameters.environment >>
+          environment:
+            DEPLOY_ENVIRONMENT: << parameters.environment >>
+          working_directory: .circleci
+          command: chmod +x validate.sh && ./validate.sh
+
+  plan:
+    executor: default
+    resource_class: small
+    parameters:
+      environment:
+        type: string
+      merge:
+        type: boolean
+        default: false
+    steps:
+      - custom-checkout:
+          merge: << parameters.merge >>
+      - aws-cli/install
+      - make-bucket:
+          bucket-name: $DEPLOYMENT_BUCKET
+      - setup-pip-cache
+      - change-node-version:
+          version: "12"
+      - setup-yarn-cache
+      - runway-plan:
+          environment: << parameters.environment >>
+      - serverless-package:
+          serverless-directory: todos
+          environment: << parameters.environment >>
+
+workflows:
+  branch-workflow:
+    when:
+      not: << pipeline.git.tag >>
+    jobs:
+      - plan:
+          name: Plan Dev
+          context: AWS_DEV_CREDENTIALS
+          environment: pre
+          merge: true
+          filters:
+            branches:
+              only:
+                - /^feature\/.*/
+      - main:
+          name: Deploy Dev
+          context: AWS_DEV_CREDENTIALS
+          environment: pre
+          filters:
+            branches:
+              only:
+                - main
+      - validate:
+          name: Validate Dev
+          context: AWS_DEV_CREDENTIALS
+          environment: pre
+          requires: 
+            - Deploy Dev      
+  
+  tag-workflow:
+    when: << pipeline.git.tag >>
+    jobs:
+      - main:
+          name: Deploy Prod
+          context: AWS_PROD_CREDENTIALS
+          environment: preprod
+          filters:
+            tags:
+              only: /([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])/

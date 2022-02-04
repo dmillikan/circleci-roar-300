@@ -1,0 +1,10 @@
+deployments:
+  - modules:
+      - name: Backend
+        path: modules/backend.cfn
+        parameters:
+          repository: ${env CIRCLE_PROJECT_REPONAME::default=local-deploy}
+          namespace: circleci.roar200-${env DEPLOY_ENVIRONMENT}
+          cfngin_bucket: ${env DEPLOYMENT_BUCKET::default=circleci.roar200-dev-deployment-bucket}
+    regions:
+      - us-east-1
