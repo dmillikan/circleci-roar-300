@@ -282,11 +282,25 @@ workflows:
           filters:
             branches:
               only:
-                - /^feature\/.*/                
+                - /^feature\/.*/
       - main:
           name: Deploy Dev
           context: AWS_DEV_CREDENTIALS
           environment: pre
+          filters:
+            branches:
+              only:
+                - main
+      - sls/main:
+          name: Deploy Serverless
+          context: AWS_DEV_CREDENTIALS
+          environment: pre
+          action: deploy
+          pre-deployment-steps:
+            - custom-checkout:
+                merge: false
+            - aws-cli/install
+            - setup-yarn-cache
           filters:
             branches:
               only:
@@ -296,7 +310,8 @@ workflows:
           context: AWS_DEV_CREDENTIALS
           environment: pre
           requires: 
-            - Deploy Dev      
+            - Deploy Dev
+            - Deploy Serverless
   
   tag-workflow:
     when: << pipeline.git.tag >>
