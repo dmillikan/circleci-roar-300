@@ -4,6 +4,8 @@ orbs:
   aws-cli: circleci/aws-cli@2.0.6
 
   sls:
+    orbs:
+      aws-cli: circleci/aws-cli@2.0.6
     executors:
       default:
         parameters:
