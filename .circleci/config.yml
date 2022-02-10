@@ -33,7 +33,6 @@ orbs:
               environment:
                 DEPLOY_ENVIRONMENT: << parameters.environment >>
               command: yarn run sls package --stage $DEPLOY_ENVIRONMENT
-
     jobs:
       main:
         executor: default
@@ -47,9 +46,6 @@ orbs:
           pre-deployment-steps:
             type: steps
             default: []
-          # merge:
-          #   type: boolean
-          #   default: false
         steps:
           - steps: << parameters.pre-deployment-steps >>
           - when:
