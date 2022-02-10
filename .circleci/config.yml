@@ -247,13 +247,13 @@ jobs:
       - make-bucket:
           bucket-name: $DEPLOYMENT_BUCKET
       - setup-pip-cache
-      - change-node-version:
-          version: "12"
+      # - change-node-version:
+      #     version: "12"
       - setup-yarn-cache
       - runway-plan:
           environment: << parameters.environment >>
-      - sls/package:
-          environment: << parameters.environment >>
+      # - sls/package:
+      #     environment: << parameters.environment >>
 
 workflows:
   branch-workflow:
