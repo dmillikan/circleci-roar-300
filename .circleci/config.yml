@@ -212,19 +212,19 @@ jobs:
       - make-bucket:
           bucket-name: $DEPLOYMENT_BUCKET
       - setup-pip-cache
-      - run:
-          name: Check version
-          command: pipenv run runway --version
-      - change-node-version:
-          version: "12"
-      - setup-yarn-cache
-      - run:
-          name: Check version
-          command: yarn run sls --version
+      # - run:
+      #     name: Check version
+      #     command: pipenv run runway --version
+      # - change-node-version:
+      #     version: "12"
+      # - setup-yarn-cache
+      # - run:
+      #     name: Check version
+      #     command: yarn run sls --version
       - runway-deploy:
           environment: << parameters.environment >>
-      - sls/deploy:
-          environment: << parameters.environment >>
+      # - sls/deploy:
+      #     environment: << parameters.environment >>
   validate:
     executor: default
     resource_class: small
