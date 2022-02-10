@@ -280,7 +280,7 @@ workflows:
           action: package
           pre-deployment-steps:
             - custom-checkout:
-              merge: << parameters.merge >>
+                merge: true
             - aws-cli/install
             - setup-yarn-cache
           filters:
