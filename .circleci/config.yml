@@ -9,7 +9,7 @@ orbs:
         parameters:
           tag:
             type: string
-            default: "12"
+            default: "12.14"
         docker:
           - image: cimg/node:<< parameters.tag >>
     commands:
