@@ -9,7 +9,7 @@ orbs:
         parameters:
           tag:
             type: string
-            default: "12.14"
+            default: "12.22"
         docker:
           - image: cimg/node:<< parameters.tag >>
     commands:
@@ -270,7 +270,7 @@ workflows:
               only:
                 - /^feature\/.*/
       - sls/main:
-          name: Package Serverless
+          name: Package Serverless - << parameters.environment >>
           context: AWS_DEV_CREDENTIALS
           environment: pre
           action: package
