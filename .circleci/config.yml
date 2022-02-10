@@ -4,8 +4,6 @@ orbs:
   aws-cli: circleci/aws-cli@2.0.6
 
   sls:
-    orbs:
-      aws-cli: circleci/aws-cli@2.0.6
     executors:
       default:
         parameters:
@@ -46,24 +44,14 @@ orbs:
           action:
             type: enum
             enum: [deploy,package]
-          
+          pre-deployment-steps:
+            type: steps
+            default: []
           # merge:
           #   type: boolean
           #   default: false
         steps:
-          - checkout
-          # - custom-checkout:
-          #     merge: << parameters.merge >>
-          - aws-cli/install
-          # - make-bucket:
-          #     bucket-name: $DEPLOYMENT_BUCKET
-          # - setup-pip-cache
-          # - run:
-          #     name: Check version
-          #     command: pipenv run runway --version
-          # - change-node-version:
-          #     version: "12"
-          - setup-yarn-cache
+          - steps: << paramters.pre-deployment-steps >>
           - when:
               condition:
                 equal: [deploy, << parameters.action >>]
@@ -290,6 +278,11 @@ workflows:
           context: AWS_DEV_CREDENTIALS
           environment: pre
           action: package
+          pre-deployment-steps:
+            - custom-checkout:
+              merge: << parameters.merge >>
+            - aws-cli/install
+            - setup-yarn-cache
           filters:
             branches:
               only:
