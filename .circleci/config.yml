@@ -135,32 +135,6 @@ commands:
             DEPLOY_ENVIRONMENT: << parameters.environment >>
           command: pipenv run runway plan
 
-  serverless-deploy:
-    parameters:
-      environment:
-        type: string
-      serverless-directory:
-        type: string
-    steps:
-      - run:
-          name: Serverless Deploy << parameters.environment >>
-          environment:
-            DEPLOY_ENVIRONMENT: << parameters.environment >>
-          command: yarn run sls deploy --stage $DEPLOY_ENVIRONMENT
-
-  serverless-package:
-    parameters:
-      environment:
-        type: string
-      serverless-directory:
-        type: string
-    steps:
-      - run:
-          name: Serverless Deploy << parameters.environment >>
-          environment:
-            DEPLOY_ENVIRONMENT: << parameters.environment >>
-          command: yarn run sls package --stage $DEPLOY_ENVIRONMENT
-
   custom-checkout:
     parameters:
       merge:
