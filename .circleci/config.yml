@@ -249,7 +249,7 @@ jobs:
       - setup-pip-cache
       # - change-node-version:
       #     version: "12"
-      - setup-yarn-cache
+      # - setup-yarn-cache
       - runway-plan:
           environment: << parameters.environment >>
       # - sls/package:
