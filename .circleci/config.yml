@@ -224,7 +224,6 @@ jobs:
       - runway-deploy:
           environment: << parameters.environment >>
       - sls/deploy:
-          serverless-directory: todos
           environment: << parameters.environment >>
   validate:
     executor: default
@@ -268,7 +267,6 @@ jobs:
       - runway-plan:
           environment: << parameters.environment >>
       - sls/package:
-          serverless-directory: todos
           environment: << parameters.environment >>
 
 workflows:
