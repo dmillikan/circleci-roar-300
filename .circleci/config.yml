@@ -4,12 +4,18 @@ orbs:
   aws-cli: circleci/aws-cli@2.0.6
 
   sls:
+    executors:
+      default:
+        parameters:
+          tag:
+            type: string
+            default: 12
+        docker:
+          - image: cimg/node:<< parameters.tag >>
     commands:
       deploy:
         parameters:
           environment:
-            type: string
-          serverless-directory:
             type: string
         steps:
           - run:
@@ -17,12 +23,9 @@ orbs:
               environment:
                 DEPLOY_ENVIRONMENT: << parameters.environment >>
               command: yarn run sls deploy --stage $DEPLOY_ENVIRONMENT
-
       package:
         parameters:
           environment:
-            type: string
-          serverless-directory:
             type: string
         steps:
           - run:
@@ -30,7 +33,47 @@ orbs:
               environment:
                 DEPLOY_ENVIRONMENT: << parameters.environment >>
               command: yarn run sls package --stage $DEPLOY_ENVIRONMENT
-  
+
+    jobs:
+      main:
+        executor: default
+        resource_class: small
+        parameters:
+          environment:
+            type: string
+          action:
+            type: enum
+            enum: [deploy,package]
+          
+          # merge:
+          #   type: boolean
+          #   default: false
+        steps:
+          - checkout
+          # - custom-checkout:
+          #     merge: << parameters.merge >>
+          - aws-cli/install
+          # - make-bucket:
+          #     bucket-name: $DEPLOYMENT_BUCKET
+          # - setup-pip-cache
+          # - run:
+          #     name: Check version
+          #     command: pipenv run runway --version
+          # - change-node-version:
+          #     version: "12"
+          - setup-yarn-cache
+          - when:
+              condition:
+                equal: [deploy, << parameters.action >>]
+              steps:
+                - deploy:
+                    environment: << parameters.environment >>      
+          - when:
+              condition:
+                equal: [package, << parameters.action >>]
+              steps:
+                - package:
+                    environment: << parameters.environment >>
 
 executors:
   default:
