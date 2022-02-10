@@ -51,7 +51,7 @@ orbs:
           #   type: boolean
           #   default: false
         steps:
-          - steps: << paramters.pre-deployment-steps >>
+          - steps: << parameters.pre-deployment-steps >>
           - when:
               condition:
                 equal: [deploy, << parameters.action >>]
