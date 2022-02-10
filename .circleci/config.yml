@@ -283,6 +283,15 @@ workflows:
             branches:
               only:
                 - /^feature\/.*/
+      - sls/main:
+          name: Package Serverless
+          context: AWS_DEV_CREDENTIALS
+          environment: pre
+          action: package
+          filters:
+            branches:
+              only:
+                - /^feature\/.*/                
       - main:
           name: Deploy Dev
           context: AWS_DEV_CREDENTIALS
