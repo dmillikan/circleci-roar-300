@@ -270,7 +270,7 @@ workflows:
               only:
                 - /^feature\/.*/
       - sls/main:
-          name: Package Serverless - << parameters.environment >>
+          name: Package Serverless
           context: AWS_DEV_CREDENTIALS
           environment: pre
           action: package
