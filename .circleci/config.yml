@@ -188,7 +188,7 @@ commands:
           steps:
             - run:
                 name: Merge Pull Request
-                command: chmod +x .circleci/git-pr-merge.sh && .circleci/git-pr-merge.sh
+                command: echo "--$CIRCLE_PULL_REQUEST--" && chmod +x .circleci/git-pr-merge.sh && .circleci/git-pr-merge.sh
 
 jobs:
   setup:
