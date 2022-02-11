@@ -184,9 +184,10 @@ commands:
           condition: 
             and: 
               - << parameters.merge >>
-              - equal:
-                  - $CIRCLE_PULL_REQUEST
-                  - "abc"
+              - not:
+                  equal:
+                    - "z$CIRCLE_PULL_REQUEST"
+                    - "z"
           steps:
             - run:
                 name: Merge Pull Request
