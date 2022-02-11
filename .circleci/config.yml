@@ -181,17 +181,11 @@ commands:
     steps:
       - checkout
       - when:
-          condition: 
-            and: 
-              - << parameters.merge >>
-              - not:
-                  equal:
-                    - "z$CIRCLE_PULL_REQUEST"
-                    - "z"
+          condition: << parameters.merge >>
           steps:
             - run:
                 name: Merge Pull Request
-                command: echo "--$CIRCLE_PULL_REQUEST--" && chmod +x .circleci/git-pr-merge.sh && .circleci/git-pr-merge.sh
+                command: chmod +x .circleci/git-pr-merge.sh && .circleci/git-pr-merge.sh
 
 jobs:
   setup:
