@@ -251,20 +251,22 @@ workflows:
                 merge: true
             - aws-cli/install
             - setup-yarn-cache
-          filters: &filters
-            branches:
-              only:
-                - main
+          filters: *filters
           requires:
             - setup
       - runway/main: 
           <<: *runway
           name: Deploy Runway
           action: deploy
+          filters: &deployFilters
+            branches:
+              only:
+                - main
       - sls/main:
           <<: *sls
           name: Deploy Serverless
           action: deploy
+          filters: *deployFilters
       - validate:
           name: Validate Dev
           context: AWS_DEV_CREDENTIALS
