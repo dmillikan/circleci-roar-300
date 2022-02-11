@@ -251,7 +251,10 @@ workflows:
                 merge: true
             - aws-cli/install
             - setup-yarn-cache
-          filters: *filters
+          filters: &filters
+            branches:
+              only:
+                - main
           requires:
             - setup
       - runway/main: 
