@@ -1,7 +1,7 @@
 readonly REPO_TYPE=$( echo "${CIRCLE_REPOSITORY_URL}" | awk '{ match($0,/@github/) ? r="github" : r="bitbucket"; print r }' )
 
 
-if [ "z${CIRCLE_PULL_REQUEST}" != "z"]
+if [ "z${CIRCLE_PULL_REQUEST}" != "z" ]
 then
     if [ ${REPO_TYPE} == github ]
     then
