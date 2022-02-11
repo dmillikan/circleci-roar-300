@@ -285,7 +285,7 @@ workflows:
           environment: &env prod
           filters: *filters
       - sls/main:
-          <<: *deploySLS
+          <<: *sls
           context: *context
           action: *action
           environment: *env
