@@ -270,7 +270,7 @@ workflows:
           filters:
             branches:
               only:
-                - /^feature\/.*/
+                - main
           requires:
             - setup
       - sls/main: &deploySLS
