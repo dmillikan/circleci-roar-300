@@ -224,71 +224,44 @@ workflows:
       not: << pipeline.git.tag >>
     jobs:
       - setup:
-          context: AWS_DEV_CREDENTIALS
-      - runway/main:
+          context: &context AWS_DEV_CREDENTIALS
+      - runway/main: &runway
           name: Plan Runway
-          context: AWS_DEV_CREDENTIALS
-          environment: pre
+          context: *context
+          environment: &env pre
           action: plan
           pre-deployment-steps:
             - custom-checkout:
                 merge: true
             - aws-cli/install
             - setup-pip-cache
-          filters:
+          filters: &filters
             branches:
               only:
                 - /^feature\/.*/
           requires:
             - setup
-      - sls/main:
+      - sls/main: &sls
           name: Package Serverless
-          context: AWS_DEV_CREDENTIALS
-          environment: pre
+          context: *context
+          environment: *env
           action: package
           pre-deployment-steps:
             - custom-checkout:
                 merge: true
             - aws-cli/install
             - setup-yarn-cache
-          filters:
-            branches:
-              only:
-                - /^feature\/.*/
+          filters: *filters
           requires:
             - setup
-      - runway/main: &deployRunway
+      - runway/main: 
+          <<: *runway
           name: Deploy Runway
-          context: AWS_DEV_CREDENTIALS
-          environment: pre
           action: deploy
-          pre-deployment-steps:
-            - custom-checkout:
-                merge: true
-            - aws-cli/install
-            - setup-pip-cache
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - setup
-      - sls/main: &deploySLS
+      - sls/main:
+          <<: *sls
           name: Deploy Serverless
-          context: AWS_DEV_CREDENTIALS
-          environment: pre
           action: deploy
-          pre-deployment-steps:
-            - custom-checkout:
-                merge: false
-            - aws-cli/install
-            - setup-yarn-cache
-          filters:
-            branches:
-              only:
-                - main
-          requires:
-            - setup
       - validate:
           name: Validate Dev
           context: AWS_DEV_CREDENTIALS
@@ -301,17 +274,19 @@ workflows:
     when: << pipeline.git.tag >>
     jobs:
       - setup:
-          context: AWS_PROD_CREDENTIALS
-          filters: &tagFilters
+          context: &context AWS_PROD_CREDENTIALS
+          filters: &filters
             tags:
               only: /([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])/
       - runway/main:
-          <<: *deployRunway
-          context: AWS_PROD_CREDENTIALS
-          environment: prod
-          filters: *tagFilters
+          <<: *runway
+          action: &action deploy
+          context: *context
+          environment: &env prod
+          filters: *filters
       - sls/main:
           <<: *deploySLS
-          context: AWS_PROD_CREDENTIALS
-          environment: prod
-          filters: *tagFilters
+          context: *context
+          action: *action
+          environment: *env
+          filters: *filters
