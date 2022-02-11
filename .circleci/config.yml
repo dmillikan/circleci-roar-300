@@ -61,36 +61,67 @@ orbs:
                 - package:
                     environment: << parameters.environment >>
 
-executors:
-  default:
-    docker:
-      - image: cimg/python:3.8.9-node
-        environment:
-          PIPENV_VENV_IN_PROJECT: true
-    shell: /bin/bash -eol pipefail
+  runway:
+    executors:
+      default:
+        parameters:
+          tag:
+            type: string
+            default: "3.8.9"
+        docker:
+          - image: cimg/python:<< parameters.tag >>
+            environment:
+              PIPENV_VENV_IN_PROJECT: true
+    commands:        
+      deploy:
+        parameters:
+          environment:
+            type: string
+        steps:
+          - run:
+              name: Deploy << parameters.environment >>
+              environment:
+                DEPLOY_ENVIRONMENT: << parameters.environment >>
+              command: pipenv run runway deploy
+      plan:
+        parameters:
+          environment:
+            type: string
+        steps:
+          - run:
+              name: Deploy << parameters.environment >>
+              environment:
+                DEPLOY_ENVIRONMENT: << parameters.environment >>
+              command: pipenv run runway plan
+    jobs:
+      main:
+        executor: default
+        resource_class: small
+        parameters:
+          environment:
+            type: string
+          action:
+            type: enum
+            enum: [deploy,plan]
+          pre-deployment-steps:
+            type: steps
+            default: []
+        steps:
+          - steps: << parameters.pre-deployment-steps >>
+          - when:
+              condition:
+                equal: [deploy, << parameters.action >>]
+              steps:
+                - deploy:
+                    environment: << parameters.environment >>      
+          - when:
+              condition:
+                equal: [plan, << parameters.action >>]
+              steps:
+                - plan:
+                    environment: << parameters.environment >>
 
 commands:
-  change-node-version:
-    parameters:
-      version:
-        type: string
-    steps:
-      - run:
-          name: Install NVM
-          command: |
-            wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-      - run:
-          name: Verify NVM Install
-          command: |
-            command -v nvm
-      - run:
-          name: Install Node << parameters.version >>
-          command: |
-            nvm install << parameters.version >>
-            nvm use << parameters.version >>
-            nvm alias default node
-            echo "nvm use node" >> ~/.profile
-
   setup-yarn-cache:
     steps:
       - restore_cache:
@@ -142,28 +173,6 @@ commands:
               echo "Deployment Bucket Already Exists in AWS Account"
             fi
 
-  runway-deploy:
-    parameters:
-      environment:
-        type: string
-    steps:
-      - run:
-          name: Deploy << parameters.environment >>
-          environment:
-            DEPLOY_ENVIRONMENT: << parameters.environment >>
-          command: pipenv run runway deploy
-
-  runway-plan:
-    parameters:
-      environment:
-        type: string
-    steps:
-      - run:
-          name: Deploy << parameters.environment >>
-          environment:
-            DEPLOY_ENVIRONMENT: << parameters.environment >>
-          command: pipenv run runway plan
-
   custom-checkout:
     parameters:
       merge:
@@ -182,37 +191,15 @@ commands:
                 command: chmod +x .circleci/git-pr-merge.sh && .circleci/git-pr-merge.sh
 
 jobs:
-  main:
-    executor: default
+  setup:
+    executor: aws-cli/default
     resource_class: small
-    parameters:
-      environment:
-        type: string
-      merge:
-        type: boolean
-        default: false
     steps:
-      - custom-checkout:
-          merge: << parameters.merge >>
       - aws-cli/install
       - make-bucket:
           bucket-name: $DEPLOYMENT_BUCKET
-      - setup-pip-cache
-      # - run:
-      #     name: Check version
-      #     command: pipenv run runway --version
-      # - change-node-version:
-      #     version: "12"
-      # - setup-yarn-cache
-      # - run:
-      #     name: Check version
-      #     command: yarn run sls --version
-      - runway-deploy:
-          environment: << parameters.environment >>
-      # - sls/deploy:
-      #     environment: << parameters.environment >>
   validate:
-    executor: default
+    executor: aws-cli/default
     resource_class: small
     parameters:
       environment:
@@ -231,44 +218,29 @@ jobs:
           working_directory: .circleci
           command: chmod +x validate.sh && ./validate.sh
 
-  plan:
-    executor: default
-    resource_class: small
-    parameters:
-      environment:
-        type: string
-      merge:
-        type: boolean
-        default: false
-    steps:
-      - custom-checkout:
-          merge: << parameters.merge >>
-      - aws-cli/install
-      - make-bucket:
-          bucket-name: $DEPLOYMENT_BUCKET
-      - setup-pip-cache
-      # - change-node-version:
-      #     version: "12"
-      # - setup-yarn-cache
-      - runway-plan:
-          environment: << parameters.environment >>
-      # - sls/package:
-      #     environment: << parameters.environment >>
-
 workflows:
   branch-workflow:
     when:
       not: << pipeline.git.tag >>
     jobs:
-      - plan:
-          name: Plan Dev
+      - setup:
+          context: AWS_DEV_CREDENTIALS
+      - runway/main:
+          name: Plan Runway
           context: AWS_DEV_CREDENTIALS
           environment: pre
-          merge: true
+          action: plan
+          pre-deployment-steps:
+            - custom-checkout:
+                merge: true
+            - aws-cli/install
+            - setup-pip-cache
           filters:
             branches:
               only:
                 - /^feature\/.*/
+          requires:
+            - setup
       - sls/main:
           name: Package Serverless
           context: AWS_DEV_CREDENTIALS
@@ -283,15 +255,25 @@ workflows:
             branches:
               only:
                 - /^feature\/.*/
-      - main:
-          name: Deploy Dev
+          requires:
+            - setup
+      - runway/main: &deployRunway
+          name: Deploy Runway
           context: AWS_DEV_CREDENTIALS
           environment: pre
+          action: deploy
+          pre-deployment-steps:
+            - custom-checkout:
+                merge: true
+            - aws-cli/install
+            - setup-pip-cache
           filters:
             branches:
               only:
-                - main
-      - sls/main:
+                - /^feature\/.*/
+          requires:
+            - setup
+      - sls/main: &deploySLS
           name: Deploy Serverless
           context: AWS_DEV_CREDENTIALS
           environment: pre
@@ -305,21 +287,31 @@ workflows:
             branches:
               only:
                 - main
+          requires:
+            - setup
       - validate:
           name: Validate Dev
           context: AWS_DEV_CREDENTIALS
           environment: pre
           requires: 
-            - Deploy Dev
+            - Deploy Runway
             - Deploy Serverless
   
   tag-workflow:
     when: << pipeline.git.tag >>
     jobs:
-      - main:
-          name: Deploy Prod
+      - setup:
           context: AWS_PROD_CREDENTIALS
-          environment: preprod
-          filters:
+          filters: &tagFilters
             tags:
               only: /([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])/
+      - runway/main:
+          <<: *deployRunway
+          context: AWS_PROD_CREDENTIALS
+          environment: prod
+          filters: *tagFilters
+      - sls/main:
+          <<: *deploySLS
+          context: AWS_PROD_CREDENTIALS
+          environment: prod
+          filters: *tagFilters
