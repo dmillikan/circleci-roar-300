@@ -322,7 +322,7 @@ workflows:
     jobs:
       - setup:
           context: &context
-            - << pipeline.parameters.aws-credential-context >>
+            - << pipeline.parameters.aws-credentials-context >>
             - SLACK
           filters: &filters
             branches:
