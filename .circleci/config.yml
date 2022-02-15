@@ -3,7 +3,6 @@ version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@2.0.6
   slack: circleci/slack@4.8.1
-
   sls:
     executors:
       default:
@@ -252,9 +251,13 @@ jobs:
 workflows:
   router:
     when:
-      equal:
-        - "router"
-        - << pipeline.parameters.workflow-name >>
+      and:
+        - equal:
+            - "router"
+            - << pipeline.parameters.workflow-name >>
+        - or:
+            - << pipeline.git.tag >>
+            - << pipeline.git.branch >>
     jobs:
       - setup:
           context: &context 
