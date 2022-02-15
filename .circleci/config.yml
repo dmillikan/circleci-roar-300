@@ -265,9 +265,13 @@ workflows:
 
   branch-workflow:
     when:
-      equal:
-        - "branch-workflow"
-        - << pipeline.parameters.workflow-name >>
+      and:
+        - equal:
+            - "branch-workflow"
+            - << pipeline.parameters.workflow-name >>
+        - or:
+            - << pipeline.git.tag >>
+            - << pipeline.git.branch >>
     jobs:
       - setup:
           context: &context 
