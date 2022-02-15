@@ -133,6 +133,12 @@ parameters:
   environment:
     type: string
     default: pre
+  aws-credentials-context:
+    type: string
+    default: AWS_DEV_CREDENTIALS  
+  workflow-name:
+    type: string
+    default: "router"
 
 commands:
   setup-yarn-cache:
@@ -244,9 +250,24 @@ jobs:
       - slack/notify: *slack-fail
 
 workflows:
+  router:
+    when:
+      equal:
+        - "router"
+        - << pipeline.parameters.workflow-name >>
+    jobs:
+      - setup:
+          context: &context 
+            - AWS_DEV_CREDENTIALS
+            - SLACK
+
+
+
   branch-workflow:
     when:
-      not: << pipeline.git.tag >>
+      equal:
+        - "branch-workflow"
+        - << pipeline.parameters.workflow-name >>
     jobs:
       - setup:
           context: &context 
@@ -307,7 +328,11 @@ workflows:
             - Deploy Serverless
   
   tag-workflow:
-    when: << pipeline.git.tag >>
+    # when: << pipeline.git.tag >>
+    when:
+      equal:
+        - "tag-workflow"
+        - << pipeline.parameters.workflow-name >>
     jobs:
       - setup:
           context: &context 
@@ -316,23 +341,23 @@ workflows:
           filters: &filters
             tags:
               only: /([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])/
-      - runway/main:
-          <<: *runway
-          name: Deploy Runway for version << pipeline.git.tag >>
-          action: &action deploy
-          context: *context
-          environment: &env preprod
-          filters: *filters
-      - sls/main:
-          <<: *sls
-          name: Deploy Serverless for version << pipeline.git.tag >>
-          context: *context
-          action: *action
-          environment: *env
-          filters: *filters
-          post-deployment-steps:
-            - slack/notify:
-                channel: C032Z0VEF6J
-                event: pass
-                template: success_tagged_deploy_1
-            - slack/notify: *slack-fail
+      # - runway/main:
+      #     <<: *runway
+      #     name: Deploy Runway for version << pipeline.git.tag >>
+      #     action: &action deploy
+      #     context: *context
+      #     environment: &env preprod
+      #     filters: *filters
+      # - sls/main:
+      #     <<: *sls
+      #     name: Deploy Serverless for version << pipeline.git.tag >>
+      #     context: *context
+      #     action: *action
+      #     environment: *env
+      #     filters: *filters
+      #     post-deployment-steps:
+      #       - slack/notify:
+      #           channel: C032Z0VEF6J
+      #           event: pass
+      #           template: success_tagged_deploy_1
+      #       - slack/notify: *slack-fail
