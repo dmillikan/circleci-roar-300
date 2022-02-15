@@ -370,8 +370,8 @@ workflows:
               only:
                 - "main"
           requires: 
-            - runway/main
-            - sls/main  
+            - << pipeline.parameters.action >> Runway
+            - << pipeline.parameters.action >> Serverless
 
   # branch-workflow:
   #   when:
