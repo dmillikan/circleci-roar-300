@@ -23,25 +23,43 @@ function init {
 
 init
 
+### environment
 k=environment
-v=pre
+v=${PIPELINE_PARM_ENVIRONMENT}
 parms=$(jq -n --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
+
+### aws-credentials-context
+k=aws-credentials-context
+v=${PIPELINE_PARM_CONTEXT}
+parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
+
+### workflow-name
+k=workflow-name
+v=${PIPELINE_PARM_WORKFLOW_NAME}
+parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
+
+###   action
+k=action
+v=${PIPELINE_PARM_ACTION}
+parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
 
 data=$(echo "$parms" | jq --arg branch "$CIRCLE_BRANCH" '. |= .+ {"branch":$branch}')
 
-cirlce_ci_url="https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pipeline"
+echo $data | jq .
 
-curl --request POST \
-    --silent \
-    --output "$tmp_fil" \
-    --dump-header "$header_result_file" \
-    --header "Circle-Token: $CIRCLE_USER_TOKEN" \
-    --header "Content-Type: application/json" \
-    --header 'Accept: application/json' \
-    --data "${data}" \
-    $cirlce_ci_url
+# cirlce_ci_url="https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pipeline"
 
-jq . $tmp_fil
+# curl --request POST \
+#     --silent \
+#     --output "$tmp_fil" \
+#     --dump-header "$header_result_file" \
+#     --header "Circle-Token: $CIRCLE_USER_TOKEN" \
+#     --header "Content-Type: application/json" \
+#     --header 'Accept: application/json' \
+#     --data "${data}" \
+#     $cirlce_ci_url
 
-rm $header_result_file
-rm $tmp_fil
+# jq . $tmp_fil
+
+# rm $header_result_file
+# rm $tmp_fil
