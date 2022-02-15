@@ -1,0 +1,10 @@
+export CIRCLE_USER_TOKEN=11b1696153f15fb7dcbc58dccba1922df2c18cf9
+export CIRCLE_PROJECT_USERNAME="dmillikan"
+export CIRCLE_PROJECT_REPONAME="circleci-roar-300"
+
+if [ "z${CIRCLE_BRANCH}" == "z" ]
+then
+    echo "CIRCLE_BRANCH not set, please enter branch :"
+    read inputbranch
+    export CIRCLE_BRANCH=$inputbranch
+fi
