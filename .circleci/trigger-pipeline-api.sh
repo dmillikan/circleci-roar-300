@@ -38,11 +38,17 @@ k=workflow-name
 v=${PIPELINE_PARM_WORKFLOW_NAME}
 parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
 
-###   action
+### action
 k=action
 v=${PIPELINE_PARM_ACTION}
 parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
 
+# ### merge
+# k=merge
+# v=${PIPELINE_PARM_MERGE}
+# parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
+
+### branch
 data=$(echo "$parms" | jq --arg branch "$CIRCLE_BRANCH" '. |= .+ {"branch":$branch}')
 
 echo $data | jq .

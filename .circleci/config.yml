@@ -264,7 +264,7 @@ jobs:
         type: string        
     steps:
       - custom-checkout:
-          merge: << parameters.merge >>
+          merge: true
       - run:
           name: Trigger workflow
           working_directory: .circleci
