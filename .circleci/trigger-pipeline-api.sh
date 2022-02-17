@@ -43,13 +43,28 @@ k=action
 v=${PIPELINE_PARM_ACTION}
 parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
 
-# ### merge
-# k=merge
-# v=${PIPELINE_PARM_MERGE}
-# parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
+### merge
+k=merge
+v=${PIPELINE_PARM_MERGE}
+parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k]; $v)')
 
-### branch
-data=$(echo "$parms" | jq --arg branch "$CIRCLE_BRANCH" '. |= .+ {"branch":$branch}')
+### determine branch or tag
+
+if [ "z${CIRCLE_BRANCH}" == "z" ]
+then
+    if [ "z${CIRCLE_TAG}" == "z" ]
+    then
+        echo "Could not find branch nor tag, exiting"
+        exit 1
+    else
+        ### tag
+        data=$(echo "$parms" | jq --arg tag "$CIRCLE_TAG" '. |= .+ {"tag":$tag}')        
+    fi
+else
+    ### branch
+    data=$(echo "$parms" | jq --arg branch "$CIRCLE_BRANCH" '. |= .+ {"branch":$branch}')
+fi
+
 
 echo $data | jq .
 
