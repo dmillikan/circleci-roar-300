@@ -332,6 +332,7 @@ workflows:
             - << pipeline.git.branch >>
     jobs:
       - setup:
+          name: Setup << pipeline.parameters.environment >>
           context: &context
             - << pipeline.parameters.aws-credentials-context >>
             - SLACK
@@ -343,7 +344,7 @@ workflows:
               only:
                 - /.*/
       - runway/main:
-          name: << pipeline.parameters.action >> Runway
+          name: << pipeline.parameters.action >> Runway - << pipeline.parameters.environment >>
           context: *context
           environment: &env << pipeline.parameters.environment >>
           action: &action << pipeline.parameters.action >>
@@ -356,9 +357,9 @@ workflows:
             - slack/notify: *slack-fail
           filters: *filters
           requires:
-            - setup
+            - setup << pipeline.parameters.environment >>
       - sls/main:
-          name: << pipeline.parameters.action >> Serverless
+          name: << pipeline.parameters.action >> Serverless - << pipeline.parameters.environment >>
           context: *context
           environment: *env
           action: *action
@@ -371,7 +372,7 @@ workflows:
             - slack/notify: *slack-fail
           filters: *filters
           requires:
-            - setup  
+            - setup << pipeline.parameters.environment >>
       - validate:
           name: Validate << pipeline.parameters.environment >>
           context: *context
@@ -381,5 +382,5 @@ workflows:
               only:
                 - "main"
           requires: 
-            - << pipeline.parameters.action >> Runway
-            - << pipeline.parameters.action >> Serverless
+            - << pipeline.parameters.action >> Runway - << pipeline.parameters.environment >>
+            - << pipeline.parameters.action >> Serverless - << pipeline.parameters.environment >>
