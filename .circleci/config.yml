@@ -141,6 +141,9 @@ parameters:
   action:
     type: string
     default: "plan"
+  merge:
+    type: string
+    default: "true"
 
 commands:
   setup-yarn-cache:
@@ -380,106 +383,3 @@ workflows:
           requires: 
             - << pipeline.parameters.action >> Runway
             - << pipeline.parameters.action >> Serverless
-
-  # branch-workflow:
-  #   when:
-  #     and:
-  #       - equal:
-  #           - "branch-workflow"
-  #           - << pipeline.parameters.workflow-name >>
-  #       - or:
-  #           - << pipeline.git.tag >>
-  #           - << pipeline.git.branch >>
-  #   jobs:
-  #     - setup:
-  #         context:
-  #           - << pipeline.parameters.aws-credential-context >>
-  #           - SLACK
-  #     - runway/main:
-  #         name: Plan Runway
-  #         context: *context
-  #         environment: &env << pipeline.parameters.environment >>
-  #         action: plan
-  #         pre-deployment-steps:
-  #           - custom-checkout:
-  #               merge: true
-  #           - aws-cli/install
-  #           - setup-pip-cache
-  #         post-deployment-steps:
-  #           - slack/notify: *slack-fail
-  #         filters: &filters
-  #           branches:
-  #             only:
-  #               - /^feature\/.*/
-  #         requires:
-  #           - setup
-  #     - sls/main: &sls
-  #         name: Package Serverless
-  #         context: *context
-  #         environment: *env
-  #         action: package
-  #         pre-deployment-steps:
-  #           - custom-checkout:
-  #               merge: true
-  #           - aws-cli/install
-  #           - setup-yarn-cache
-  #         post-deployment-steps:
-  #           - slack/notify: *slack-fail
-  #         filters: *filters
-  #         requires:
-  #           - setup
-  #     - runway/main: 
-  #         <<: *runway
-  #         name: Deploy Runway
-  #         action: deploy
-  #         filters: &deployFilters
-  #           branches:
-  #             only:
-  #               - main
-  #     - sls/main:
-  #         <<: *sls
-  #         name: Deploy Serverless
-  #         action: deploy
-  #         filters: *deployFilters
-  #     - validate:
-  #         name: Validate Dev
-  #         context: *context
-  #         environment: *env
-  #         requires: 
-  #           - Deploy Runway
-  #           - Deploy Serverless
-  
-  # tag-workflow:
-  #   # when: << pipeline.git.tag >>
-  #   when:
-  #     equal:
-  #       - "tag-workflow"
-  #       - << pipeline.parameters.workflow-name >>
-  #   jobs:
-  #     - setup:
-  #         context: &context 
-  #           - AWS_PROD_CREDENTIALS
-  #           - SLACK
-  #         filters: &filters
-  #           tags:
-  #             only: /([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])/
-  #     # - runway/main:
-  #     #     <<: *runway
-  #     #     name: Deploy Runway for version << pipeline.git.tag >>
-  #     #     action: &action deploy
-  #     #     context: *context
-  #     #     environment: &env preprod
-  #     #     filters: *filters
-  #     # - sls/main:
-  #     #     <<: *sls
-  #     #     name: Deploy Serverless for version << pipeline.git.tag >>
-  #     #     context: *context
-  #     #     action: *action
-  #     #     environment: *env
-  #     #     filters: *filters
-  #     #     post-deployment-steps:
-  #     #       - slack/notify:
-  #     #           channel: C032Z0VEF6J
-  #     #           event: pass
-  #     #           template: success_tagged_deploy_1
-  #     #       - slack/notify: *slack-fail
