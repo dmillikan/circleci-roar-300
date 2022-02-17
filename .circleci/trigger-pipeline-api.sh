@@ -50,7 +50,7 @@ parms=$(echo "$parms" | jq --arg k "$k" --arg v "$v" 'setpath(["parameters",$k];
 
 ### determine branch or tag
 
-if [ "z${BRANCH}" == "z" ]
+if [ "z${CIRCLE_BRANCH}" == "z" ]
 then
     if [ "z${CIRCLE_TAG}" == "z" ]
     then
