@@ -357,7 +357,7 @@ workflows:
             - slack/notify: *slack-fail
           filters: *filters
           requires:
-            - setup << pipeline.parameters.environment >>
+            - Setup << pipeline.parameters.environment >>
       - sls/main:
           name: << pipeline.parameters.action >> Serverless - << pipeline.parameters.environment >>
           context: *context
@@ -372,7 +372,7 @@ workflows:
             - slack/notify: *slack-fail
           filters: *filters
           requires:
-            - setup << pipeline.parameters.environment >>
+            - Setup << pipeline.parameters.environment >>
       - validate:
           name: Validate << pipeline.parameters.environment >>
           context: *context
