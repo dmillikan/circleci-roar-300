@@ -320,17 +320,6 @@ workflows:
               ignore: /.*/
             tags:
               only: /([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])/
-      - trigger-workflow:
-          name: Trigger QA Deployment
-          environment: "qa"
-          aws-credentials-context: "AWS_PROD_CREDENTIALS"
-          workflow-name: "main"
-          action: deploy
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])\.([1-9][0-9]+|[0-9])-qa/
 
   main:
     when:
