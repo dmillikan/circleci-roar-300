@@ -9,6 +9,7 @@ then
         IFS=$' \t\n'
         URL="https://api.github.com/repos/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/pulls/${PULL_REQUEST_NUMBER}"
         BASE=$(curl -s -X GET -H "Accept: application/vnd.github.v3+json"  ${URL} | jq -r .base.ref)
+        echo "Base SHA: ${BASE}"
     fi
 
     git config --global user.email "circleci-pre-merge@circleci.roar+pr${PULL_REQUEST_NUMBER}@gmail.com"
