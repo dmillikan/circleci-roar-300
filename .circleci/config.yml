@@ -268,6 +268,11 @@ jobs:
       - run:
           name: Trigger workflow
           working_directory: .circleci
+          environment:
+            PIPELINE_PARM_ENVIRONMENT: << parameters.environment >>
+            PIPELINE_PARM_CONTEXT: << parameters.aws-credentials-context >>
+            PIPELINE_PARM_WORKFLOW_NAME: << parameters.workflow-name >>
+            PIPELINE_PARM_ACTION: << parameters.action >>
           command: chmod +x trigger-pipeline-api.sh && ./trigger-pipeline-api.sh
 
 workflows:
