@@ -264,7 +264,7 @@ jobs:
         type: string        
     steps:
       - custom-checkout:
-          merge: true
+          merge: false
       - run:
           name: Trigger workflow
           working_directory: .circleci
@@ -282,6 +282,7 @@ workflows:
             - << pipeline.git.branch >>
     jobs:
       - trigger-workflow:
+          name: Trigger Planning Workflow
           environment: "pre"
           aws-credentials-context: "AWS_DEV_CREDENTIALS"
           workflow-name: "main"
@@ -291,6 +292,7 @@ workflows:
               ignore:
                 - main
       - trigger-workflow:
+          name: Trigger Dev Deployment
           environment: "pre"
           aws-credentials-context: "AWS_DEV_CREDENTIALS"
           workflow-name: "main"
@@ -300,6 +302,7 @@ workflows:
               only:
                 - main
       - trigger-workflow:
+          name: Trigger Prod Deployment
           environment: "preprod"
           aws-credentials-context: "AWS_PROD_CREDENTIALS"
           workflow-name: "main"

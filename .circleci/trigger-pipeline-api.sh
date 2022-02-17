@@ -53,19 +53,19 @@ data=$(echo "$parms" | jq --arg branch "$CIRCLE_BRANCH" '. |= .+ {"branch":$bran
 
 echo $data | jq .
 
-# cirlce_ci_url="https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pipeline"
+cirlce_ci_url="https://circleci.com/api/v2/project/gh/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/pipeline"
 
-# curl --request POST \
-#     --silent \
-#     --output "$tmp_fil" \
-#     --dump-header "$header_result_file" \
-#     --header "Circle-Token: $CIRCLE_USER_TOKEN" \
-#     --header "Content-Type: application/json" \
-#     --header 'Accept: application/json' \
-#     --data "${data}" \
-#     $cirlce_ci_url
+curl --request POST \
+    --silent \
+    --output "$tmp_fil" \
+    --dump-header "$header_result_file" \
+    --header "Circle-Token: $CIRCLE_USER_TOKEN" \
+    --header "Content-Type: application/json" \
+    --header 'Accept: application/json' \
+    --data "${data}" \
+    $cirlce_ci_url
 
-# jq . $tmp_fil
+jq . $tmp_fil
 
 # rm $header_result_file
 # rm $tmp_fil
